@@ -5,13 +5,22 @@ library(tidyverse)
 library(zoo)
 library(readabs)
 library(readxl)
-library(googlesheets4)
 library(RCurl)
 
 # housing -------------------------------------------------------
 
 #housing CPI
 
+perth_dwell <- read_abs_series('A2329922T') |> select(date, value) |> 
+  mutate(date = as.yearqtr(date)) |> rename(perth = value)
+
+aus_dwell <- read_abs_series('A2329942A')|> select(date, value) |> 
+  mutate(date = as.yearqtr(date)) |> rename(wacc = value)
+
+dwell_cpi <- perth_dwell |> left_join(aus_dwell) |>
+  mutate(date = yq(date)) |> na.omit()
+
+dwell_cpi |> write_excel_csv('dwell_cpi.csv')
 
 #property price growth by suburb
 
@@ -26,6 +35,16 @@ wa_suburbs |> write_excel_csv('wa_suburbs.csv')
 
 #rent cpi
 
+perth_rents <- read_abs_series('A2326412L')|> select(date, value) |> 
+  mutate(year_quarter = as.yearqtr(date)) |> rename(perth = value)
+
+aus_rents <- read_abs_series('A2326432W')|> select(date, value) |> 
+  mutate(date = as.yearqtr(date)) |> rename(wacc = value)
+
+rents_cpi <- perth_dwell |> left_join(aus_dwell) |>
+  mutate(date = yq(date)) |> na.omit()
+
+rents_cpi |> write_excel_csv('rents_cpi.csv')
 
 #rental vacancy rates
 
