@@ -48,10 +48,40 @@ rents_cpi |> write_excel_csv('rents_cpi.csv')
 
 #rental vacancy rates
 
+#wip
 
 # construction -------------------------------------------------------
 
 #value of construction
+
+con_value <- read_abs('8752.0', tables = c('4')) |> 
+  filter(series_type == "Seasonally Adjusted") |>
+  select(date, series, value)
+  
+con_value <- con_value |> separate_wider_delim(series, 
+                                  delim = " ;", 
+                                  names = c('series', 
+                                            'measure', 
+                                            'state', 
+                                            'type', 
+                                            'moretype'), too_many = 'drop') |>
+  mutate(across(c('series', 
+                  'measure', 
+                  'state', 
+                  'type', 
+                  'moretype'), str_squish)) |>
+  filter(type == "Total (Type of Work)") |> 
+  mutate(series = NULL, 
+         measure = NULL,
+         type = NULL,
+         moretype = NULL) |> 
+  na.omit()
+
+con_value |> group_by(state) |> 
+  mutate(YoY = (value - lag(value, 4)) / lag(value, 4) * 100) |> 
+  select(date, state, YoY) |> tail(28) |>   mutate(date = as.yearqtr(date)) |>
+  pivot_wider(names_from = date, values_from = YoY) |> na.omit() |>
+  write_excel_csv('con_value.csv')
 
 
 
