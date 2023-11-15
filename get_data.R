@@ -152,6 +152,8 @@ repayments |> write_excel_csv('repayments.csv')
 population <- read_abs_series('A2133251W') |> select(date, value) |> 
   rename(population = 'value')
 
+#home repayments per capita
+
 repayments_pc <- repayments |> 
   left_join(population, join_by(closest(date >= date))) |> 
   mutate('date.y' = NULL) |> na.omit()
@@ -161,3 +163,16 @@ repayments_pc <- repayments_pc |> mutate(interest_charged = (interest_charged * 
                         excess_payment = (excess_payment * 1000000) / (population * 1000))
 
 repayments_pc |> write_excel_csv('repayments_pc.csv')
+
+#repayments as a share of income
+
+burden <- read_xlsx('e13hist.xlsx', skip = 10) |> 
+  rename(date = 'Series ID',
+         interest_charged = 'LPHTICRI',
+         scheduled_payment = 'LPHTSPRI',
+         excess_payment = 'LPHTEXRI') |> select(date,
+                                              interest_charged,
+                                              scheduled_payment,
+                                              excess_payment) |> na.omit()
+
+burden |> write_excel_csv('burden.csv')
