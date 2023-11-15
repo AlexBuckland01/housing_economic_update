@@ -83,8 +83,6 @@ con_value |> group_by(state) |>
   pivot_wider(names_from = date, values_from = YoY) |> na.omit() |>
   write_excel_csv('con_value.csv')
 
-
-
 #building activity
 
 approvals <- read_abs_series('A422572J') |> select(date, value) |> 
@@ -134,3 +132,32 @@ rates <- cash_rates |> left_join(lending_rates) |>
   mutate('date.y' = NULL) |> na.omit()
 
 rates |> write_excel_csv('rates.csv')
+
+#home repayments composition
+
+download.file(url = 'https://www.rba.gov.au/statistics/tables/xls/e13hist.xlsx',
+              destfile = 'e13hist.xlsx', method = 'curl')
+
+repayments <- read_xlsx('e13hist.xlsx', skip = 10) |> 
+  rename(date = 'Series ID',
+         interest_charged = 'LPHTIC',
+         scheduled_payment = 'LPHTSP',
+         excess_payment = 'LPHTEX') |> select(date,
+                                              interest_charged,
+                                              scheduled_payment,
+                                              excess_payment)
+
+repayments |> write_excel_csv('repayments.csv')
+
+population <- read_abs_series('A2133251W') |> select(date, value) |> 
+  rename(population = 'value')
+
+repayments_pc <- repayments |> 
+  left_join(population, join_by(closest(date >= date))) |> 
+  mutate('date.y' = NULL) |> na.omit()
+
+repayments_pc <- repayments_pc |> mutate(interest_charged = (interest_charged * 1000000) / (population * 1000),
+                        scheduled_payment = (scheduled_payment * 1000000) / (population * 1000),
+                        excess_payment = (excess_payment * 1000000) / (population * 1000))
+
+repayments_pc |> write_excel_csv('repayments_pc.csv')
