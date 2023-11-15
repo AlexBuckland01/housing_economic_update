@@ -30,6 +30,22 @@ wa_suburbs <- wa_suburbs |> mutate(pricegrowth = runif(n(), min=0, max=1)) #gene
 
 wa_suburbs |> write_excel_csv('wa_suburbs.csv')
 
+# median price of transfers
+
+transfers <- read_abs(cat_no = '6432.0', tables = "2")
+
+transfers <- transfers |> separate_wider_delim(series, 
+                                               delim = " ;", 
+                                               names = c('series',  
+                                                         'state'), too_many = 'drop') |>
+  mutate(across(c('series', 
+                  'state'), str_squish)) |>
+  filter(series == "Median Price of Established House Transfers (Unstratified)") |> 
+  select(date, state, value) |> 
+  pivot_wider(names_from = state) |>
+  na.omit()
+
+transfers |> write_excel_csv('transfers.csv')
 
 # rentals ----------------------------------------------------------------
 
